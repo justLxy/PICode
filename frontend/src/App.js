@@ -81,7 +81,6 @@ function App() {
                     <div>
                         <label htmlFor="moduleSize">Image Size:</label>
                         <select id="moduleSize" value={moduleSize} onChange={(e) => setModuleSize(e.target.value)}>
-                            <option value="3">Small</option>
                             <option value="4">Medium</option>
                             <option value="5">Large</option>
                         </select>
