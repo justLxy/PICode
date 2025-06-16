@@ -35,6 +35,9 @@ app.use('/public', express.static(publicDir));
 
 app.post('/api/encode', upload.single('logo'), (req, res) => {
     const { message, moduleSize } = req.body;
+    if (!req.file) {
+        return res.status(400).json({ error: 'Logo image is required' });
+    }
     if (!message) {
         // Clean up uploaded file if it exists
         if(req.file) fs.unlink(req.file.path, () => {});
@@ -69,7 +72,10 @@ app.post('/api/encode', upload.single('logo'), (req, res) => {
             isSent = true;
             console.error(`Encoder stderr: ${errorOutput}`);
             if (code !== 0) {
-                 res.status(500).json({ error: 'Failed to encode message.', details: errorOutput.trim() });
+                if (errorOutput.includes('Message too long')) {
+                    return res.status(400).json({ error: 'Message is too long. Please shorten your message and try again.' });
+                }
+                res.status(500).json({ error: 'Failed to encode message.', details: errorOutput.trim() });
             }
         }
     });

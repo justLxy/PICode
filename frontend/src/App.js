@@ -9,6 +9,8 @@ function App() {
     const [decodedMessage, setDecodedMessage] = useState('');
     const [error, setError] = useState('');
 
+    const MAX_MESSAGE_LENGTH = 97;
+
     // Add state for encoder options
     const [moduleSize, setModuleSize] = useState('4');
 
@@ -72,25 +74,31 @@ function App() {
             
             <div className="card">
                 <h2>Encode</h2>
-                <textarea 
-                    value={message} 
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Enter message to encode"
-                />
+                <div className="textarea-container">
+                    <textarea 
+                        value={message} 
+                        onChange={(e) => setMessage(e.target.value)}
+                        placeholder="Enter message to encode"
+                        maxLength={MAX_MESSAGE_LENGTH}
+                    />
+                    <p className="char-counter">{message.length} / {MAX_MESSAGE_LENGTH}</p>
+                </div>
                 <div className="options">
                     <div>
                         <label htmlFor="moduleSize">Image Size:</label>
                         <select id="moduleSize" value={moduleSize} onChange={(e) => setModuleSize(e.target.value)}>
                             <option value="4">Medium</option>
                             <option value="5">Large</option>
+                            <option value="6">Extra Large</option>
+                            <option value="8">Super Large</option>
                         </select>
                     </div>
                 </div>
                 <div>
-                    <label htmlFor="logo-upload">Optional Logo:</label>
-                    <input id="logo-upload" type="file" onChange={(e) => setLogoFile(e.target.files[0])} />
+                    <label htmlFor="logo-upload">Upload Logo:</label>
+                    <input id="logo-upload" type="file" onChange={(e) => setLogoFile(e.target.files[0])} accept="image/png, image/jpeg" />
                 </div>
-                <button onClick={handleEncode}>Encode</button>
+                <button onClick={handleEncode} disabled={message.length === 0 || !logoFile}>Encode</button>
                 {encodedImageUrl && (
                     <div className="result">
                         <h3>Encoded PIcode:</h3>
