@@ -34,7 +34,7 @@ app.use(express.json());
 app.use('/public', express.static(publicDir));
 
 app.post('/api/encode', upload.single('logo'), (req, res) => {
-    const { message, moduleNumData, moduleSize } = req.body;
+    const { message, moduleSize } = req.body;
     if (!message) {
         // Clean up uploaded file if it exists
         if(req.file) fs.unlink(req.file.path, () => {});
@@ -46,7 +46,7 @@ app.post('/api/encode', upload.single('logo'), (req, res) => {
     const encoderPath = path.join(__dirname, 'encoder');
     const logoPath = req.file ? req.file.path : '';
 
-    const process = spawn(encoderPath, [message, logoPath, outputFilePath, moduleNumData || '29', moduleSize || '4']);
+    const process = spawn(encoderPath, [message, logoPath, outputFilePath, '29', moduleSize || '4']);
     let isSent = false;
     let errorOutput = '';
 

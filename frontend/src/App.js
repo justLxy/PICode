@@ -10,7 +10,6 @@ function App() {
     const [error, setError] = useState('');
 
     // Add state for encoder options
-    const [moduleNumData, setModuleNumData] = useState('29');
     const [moduleSize, setModuleSize] = useState('4');
 
     const handleEncode = async () => {
@@ -19,7 +18,6 @@ function App() {
         
         const formData = new FormData();
         formData.append('message', message);
-        formData.append('moduleNumData', moduleNumData);
         formData.append('moduleSize', moduleSize);
         if (logoFile) {
             formData.append('logo', logoFile);
@@ -81,14 +79,6 @@ function App() {
                 />
                 <div className="options">
                     <div>
-                        <label htmlFor="moduleNumData">Data Capacity:</label>
-                        <select id="moduleNumData" value={moduleNumData} onChange={(e) => setModuleNumData(e.target.value)}>
-                            <option value="21">21 (Low)</option>
-                            <option value="25">25 (Medium)</option>
-                            <option value="29">29 (High)</option>
-                        </select>
-                    </div>
-                    <div>
                         <label htmlFor="moduleSize">Image Size:</label>
                         <select id="moduleSize" value={moduleSize} onChange={(e) => setModuleSize(e.target.value)}>
                             <option value="3">Small</option>
@@ -113,7 +103,7 @@ function App() {
             <div className="card">
                 <h2>Decode</h2>
                 <input type="file" onChange={(e) => setSelectedFile(e.target.files[0])} />
-                <button onClick={handleDecode}>Decode</button>
+                <button onClick={handleDecode} disabled={!selectedFile}>Decode</button>
                 {decodedMessage && (
                     <div className="result">
                         <h3>Decoded Message:</h3>
