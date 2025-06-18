@@ -57,7 +57,19 @@ function App() {
     };
 
     const startCamera = async () => {
-        setDecodedMessage(''); // Clear previous results immediately for better UX and state reset
+        // --- Hard Reset ---
+        // Ensure any previous scanning loop is stopped
+        if (scanLoopId.current) {
+            cancelAnimationFrame(scanLoopId.current);
+            scanLoopId.current = null;
+        }
+        // Reset all relevant state and refs to a clean slate
+        setDecodedMessage('');
+        setError('');
+        setIsScanning(false);
+        inflightRef.current = false;
+        // --- End Hard Reset ---
+
         try {
             const mediaStream = await navigator.mediaDevices.getUserMedia({ 
                 video: { 
@@ -106,20 +118,20 @@ function App() {
     };
 
     const startAutoScan = () => {
-        if (isScanningRef.current) return;
-        
+        // No need for "if (isScanningRef.current) return;" because startCamera now handles reset
         setIsScanning(true);
-        setError('');
         // setDecodedMessage(''); // Moved to startCamera
+        // setError(''); // Moved to startCamera
         
         // Start the continuous scan loop
         scanLoopId.current = requestAnimationFrame(scanLoop);
     };
 
     const stopAutoScan = () => {
-        setIsScanning(false); // This will stop the loop
+        setIsScanning(false);
         if (scanLoopId.current) {
             cancelAnimationFrame(scanLoopId.current);
+            scanLoopId.current = null; // Also clear the ref here
         }
         inflightRef.current = false;
     };
