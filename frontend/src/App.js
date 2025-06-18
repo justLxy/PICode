@@ -57,6 +57,7 @@ function App() {
     };
 
     const startCamera = async () => {
+        setDecodedMessage(''); // Clear previous results immediately for better UX and state reset
         try {
             const mediaStream = await navigator.mediaDevices.getUserMedia({ 
                 video: { 
@@ -70,19 +71,22 @@ function App() {
             setError('');
             inflightRef.current = false;
             
-            // Wait for video element to be ready
-            setTimeout(() => {
+            // Assign stream to video element and play
+            setTimeout(async () => {
                 if (videoRef.current) {
                     videoRef.current.srcObject = mediaStream;
-                    videoRef.current.onloadedmetadata = () => {
-                        videoRef.current.play();
-                        // Auto start scanning once camera is ready
-                        setTimeout(() => {
+                    try { await videoRef.current.play(); } catch (_) {}
+                    // Wait until metadata (dimensions) are available, then start scanning
+                    const waitUntilReady = () => {
+                        if (videoRef.current && videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
                             startAutoScan();
-                        }, 200); // Reduced delay for faster start
+                        } else {
+                            requestAnimationFrame(waitUntilReady);
+                        }
                     };
+                    waitUntilReady();
                 }
-            }, 100);
+            }, 50);
         } catch (err) {
             console.error('Camera error:', err);
             setError('Unable to access camera. Please check permissions and try again.');
@@ -94,6 +98,9 @@ function App() {
             stream.getTracks().forEach(track => track.stop());
             setStream(null);
         }
+        if (videoRef.current) {
+            videoRef.current.srcObject = null; // Explicitly clear video source
+        }
         stopAutoScan(); // Ensure scanning stops when camera closes
         setShowCamera(false);
     };
@@ -103,7 +110,7 @@ function App() {
         
         setIsScanning(true);
         setError('');
-        setDecodedMessage('');
+        // setDecodedMessage(''); // Moved to startCamera
         
         // Start the continuous scan loop
         scanLoopId.current = requestAnimationFrame(scanLoop);
@@ -219,6 +226,19 @@ function App() {
         }
     };
 
+    const isUrl = (str) => {
+        if (!str) return false;
+        const pattern = /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/[^\s]*)?$/i;
+        return pattern.test(str.trim());
+    };
+
+    useEffect(() => {
+        if (decodedMessage && isUrl(decodedMessage.trim())) {
+            const target = decodedMessage.trim().startsWith('http') ? decodedMessage.trim() : `https://${decodedMessage.trim()}`;
+            window.open(target, '_blank');
+        }
+    }, [decodedMessage]);
+
     return (
         <div className="App">
             <h1>PIcode Demo</h1>
@@ -295,7 +315,12 @@ function App() {
                 {decodedMessage && (
                     <div className="result">
                         <h3>Decoded Message:</h3>
-                        <p>{decodedMessage}</p>
+                        {isUrl(decodedMessage.trim()) ? (
+                            <a href={decodedMessage.trim().startsWith('http') ? decodedMessage.trim() : `https://${decodedMessage.trim()}`}
+                               target="_blank" rel="noopener noreferrer">{decodedMessage}</a>
+                        ) : (
+                            <p>{decodedMessage}</p>
+                        )}
                     </div>
                 )}
             </div>
