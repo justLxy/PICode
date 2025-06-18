@@ -47,8 +47,9 @@ public:
 public:
 	// Interface function. Alan ZHOU 20140223
 	// generate and save a picode to the current directory
-	int GeneratePiCode(char *msg, char *filenameLogo, char *filenamePiCode); // Interface via strings
-	int GeneratePiCode(char *msg, int *logoPixels, int *picodePixels); // Interface via arrays
+	int GeneratePiCode(char msg[], char filenameLogo[], char filenamePiCode[]);
+	int GeneratePiCode(char msg[], char filenameLogo[], char filenamePiCode[], unsigned int moduleNumData, unsigned int moduleSize, unsigned int quality);
+	int GeneratePiCode(char *msg, int *logoPixels, int *picodePixels);
 private:
 	// Lower level functions
 	int Encode(char *msg, char *data);
@@ -80,7 +81,7 @@ static const unsigned char hfByteArray[hfNum] = {95, 96, 97, 98, 99, 100, 101, 1
 
 // Interface function with C symbols for PHP.
 // generate and save a picode to the current directory
-extern "C" int generate_picode(char msg[], char filenameLogo[], char filenamePiCode[], unsigned int moduleNumData, unsigned int moduleSize);
+extern "C" int generate_picode(char msg[], char filenameLogo[], char filenamePiCode[], unsigned int moduleNumData, unsigned int moduleSize, unsigned int quality);
 
 #endif
 

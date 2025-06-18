@@ -32,7 +32,7 @@ PiCodeEncoder::PiCodeEncoder(void)
 	RSGFPoly = 285; // Primitive polynomial = D^8+D^4+D^3+D^2+1 (285 decimal)
 	codeRateMax = 5.0f/6.0f;
 
-	quality = 40.0f / 255;
+	// quality = 40.0f / 255; // This will be set by GeneratePiCode
 }
 
 PiCodeEncoder::~PiCodeEncoder(void)
@@ -87,6 +87,14 @@ int PiCodeEncoder::GeneratePiCode(char msg[], char filenameLogo[], char filename
 	delete[] data;
 	return 0; // Success
 } //fxn
+
+int PiCodeEncoder::GeneratePiCode(char msg[], char filenameLogo[], char filenamePiCode[], unsigned int moduleNumData, unsigned int moduleSize, unsigned int quality)
+{
+	this->moduleNumData = moduleNumData;
+	this->moduleSize = moduleSize;
+	this->quality = (float)quality / 255.0f;
+	return this->GeneratePiCode(msg, filenameLogo, filenamePiCode);
+}
 
 /*
 Return:
@@ -1036,15 +1044,10 @@ bool PiCodeEncoder::GetTilingPattern(unsigned char *tilingPattern, char moduleVa
 }// fxn
 
 
-// Interface function with C symbols for PHP.
-// Generate and save a picode to the current directory
-int generate_picode(char msg[], char filenameLogo[], char filenamePiCode[], unsigned int moduleNumData, unsigned int moduleSize)
+// C-style interface for PiCodeEncoder class
+extern "C" int generate_picode(char msg[], char filenameLogo[], char filenamePiCode[], unsigned int moduleNumData, unsigned int moduleSize, unsigned int quality)
 {
-	PiCodeEncoder pc;
-	pc.moduleNumData = moduleNumData;
-	pc.moduleSize = moduleSize;
-	int flag = pc.GeneratePiCode(msg, filenameLogo, filenamePiCode);
-	
-	return flag; //0: successful; 1: message too long/short; otherwise: failure.
-}// fxn
+	PiCodeEncoder encoder;
+	return encoder.GeneratePiCode(msg, filenameLogo, filenamePiCode, moduleNumData, moduleSize, quality);
+}
 

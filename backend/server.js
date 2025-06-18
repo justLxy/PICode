@@ -34,7 +34,7 @@ app.use(express.json());
 app.use('/public', express.static(publicDir));
 
 app.post('/api/encode', upload.single('logo'), (req, res) => {
-    const { message, moduleSize } = req.body;
+    const { message, moduleSize, dimension, quality } = req.body;
     if (!req.file) {
         return res.status(400).json({ error: 'Logo image is required' });
     }
@@ -49,7 +49,7 @@ app.post('/api/encode', upload.single('logo'), (req, res) => {
     const encoderPath = path.join(__dirname, 'encoder');
     const logoPath = req.file ? req.file.path : '';
 
-    const process = spawn(encoderPath, [message, logoPath, outputFilePath, '29', moduleSize || '4']);
+    const process = spawn(encoderPath, [message, logoPath, outputFilePath, dimension || '29', moduleSize || '4', quality || '25']);
     let isSent = false;
     let errorOutput = '';
 
@@ -91,10 +91,10 @@ app.post('/api/decode', upload.single('image'), (req, res) => {
 
     const process = spawn(decoderPath, [imagePath]);
 
-    // Kill process if it runs over 3 seconds
+    // Kill process if it runs over 8 seconds
     const killTimer = setTimeout(() => {
         try { process.kill('SIGKILL'); } catch (e) {}
-    }, 3000);
+    }, 8000);
 
     let output = '';
     let errorOutput = '';

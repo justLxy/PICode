@@ -9,10 +9,10 @@ function App() {
     const [decodedMessage, setDecodedMessage] = useState('');
     const [error, setError] = useState('');
 
-    const MAX_MESSAGE_LENGTH = 97;
-
-    // Add state for encoder options
+    // Encoder options state
     const [moduleSize, setModuleSize] = useState('4');
+    const [dimension, setDimension] = useState('29');
+    const [quality, setQuality] = useState('25'); // Corresponds to λ
 
     // Camera related state
     const [showCamera, setShowCamera] = useState(false);
@@ -22,7 +22,29 @@ function App() {
     const canvasRef = useRef(null);
     const scanLoopId = useRef(null);
     const isScanningRef = useRef(false);
-    const inflightRef = useRef(false); // prevent overlapping requests
+    const inflightRef = useRef(false);
+
+    const capacityMap = {
+        '29': 81,
+        '33': 107,
+        '37': 136,
+        '41': 169,
+        '45': 205,
+        '49': 244,
+        '53': 255,
+        '57': 255,
+        '61': 255,
+        '65': 255,
+    };
+
+    const MAX_MESSAGE_LENGTH = capacityMap[dimension] || 81;
+
+    useEffect(() => {
+        if (message.length > MAX_MESSAGE_LENGTH) {
+            setMessage(message.substring(0, MAX_MESSAGE_LENGTH));
+        }
+    }, [dimension, message, MAX_MESSAGE_LENGTH]);
+
 
     const handleEncode = async () => {
         setError('');
@@ -31,6 +53,9 @@ function App() {
         const formData = new FormData();
         formData.append('message', message);
         formData.append('moduleSize', moduleSize);
+        formData.append('dimension', dimension);
+        formData.append('quality', quality);
+
         if (logoFile) {
             formData.append('logo', logoFile);
         }
@@ -52,19 +77,15 @@ function App() {
     };
 
     const startCamera = async () => {
-        // --- Hard Reset ---
-        // Ensure any previous scanning loop is stopped
         if (scanLoopId.current) {
             cancelAnimationFrame(scanLoopId.current);
             scanLoopId.current = null;
         }
-        // Reset all relevant state and refs to a clean slate
         setDecodedMessage('');
         setError('');
         setIsScanning(false);
-        isScanningRef.current = false; // Sync ref manually
+        isScanningRef.current = false;
         inflightRef.current = false;
-        // --- End Hard Reset ---
 
         try {
             const mediaStream = await navigator.mediaDevices.getUserMedia({ 
@@ -79,12 +100,10 @@ function App() {
             setError('');
             inflightRef.current = false;
             
-            // Assign stream to video element and play
             setTimeout(async () => {
                 if (videoRef.current) {
                     videoRef.current.srcObject = mediaStream;
                     try { await videoRef.current.play(); } catch (_) {}
-                    // Wait until metadata (dimensions) are available, then start scanning
                     const waitUntilReady = () => {
                         if (videoRef.current && videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
                             startAutoScan();
@@ -107,28 +126,24 @@ function App() {
             setStream(null);
         }
         if (videoRef.current) {
-            videoRef.current.srcObject = null; // Explicitly clear video source
+            videoRef.current.srcObject = null;
         }
-        stopAutoScan(); // Ensure scanning stops when camera closes
+        stopAutoScan();
         setShowCamera(false);
     };
 
     const startAutoScan = () => {
-        // No need for "if (isScanningRef.current) return;" because startCamera now handles reset
         setIsScanning(true);
-        isScanningRef.current = true; // Sync ref manually
-        // setError(''); // Moved to startCamera
-        
-        // Start the continuous scan loop
+        isScanningRef.current = true;
         scanLoopId.current = requestAnimationFrame(scanLoop);
     };
 
     const stopAutoScan = () => {
         setIsScanning(false);
-        isScanningRef.current = false; // Sync ref manually
+        isScanningRef.current = false;
         if (scanLoopId.current) {
             cancelAnimationFrame(scanLoopId.current);
-            scanLoopId.current = null; // Also clear the ref here
+            scanLoopId.current = null;
         }
         inflightRef.current = false;
     };
@@ -139,11 +154,9 @@ function App() {
             inflightRef.current = true;
             captureAndDecode().finally(() => {
                 inflightRef.current = false;
-                // Request next frame after current decode completes
                 scanLoopId.current = requestAnimationFrame(scanLoop);
             });
         } else {
-            // Skip this frame, try again next frame
             scanLoopId.current = requestAnimationFrame(scanLoop);
         }
     };
@@ -157,8 +170,6 @@ function App() {
             const video = videoRef.current;
             const canvas = canvasRef.current;
             const context = canvas.getContext('2d');
-
-            // Crop the center 70% square of the shorter side and resize to 600x600
             const minSide = Math.min(video.videoWidth, video.videoHeight);
             const side = minSide * 0.7;
             const sx = (video.videoWidth - side) / 2;
@@ -170,17 +181,7 @@ function App() {
 
             if (TARGET === 0) return resolve();
 
-            context.drawImage(
-                video,
-                sx,
-                sy,
-                side,
-                side,
-                0,
-                0,
-                TARGET,
-                TARGET
-            );
+            context.drawImage(video, sx, sy, side, side, 0, 0, TARGET, TARGET);
 
             canvas.toBlob(async (blob) => {
                 if (blob && isScanningRef.current) {
@@ -198,10 +199,10 @@ function App() {
                         if (isScanningRef.current && response.ok && data.decodedMessage && !data.decodedMessage.includes('Can not detect')) {
                             setDecodedMessage(data.decodedMessage);
                             stopCamera();
-                            setError('');
                         }
                     } catch (err) {
-                        /* network or decode error; continue scanning */
+                        // Non-critical error, just log it
+                        console.error('Decode loop error:', err);
                     }
                 }
                 resolve();
@@ -210,10 +211,7 @@ function App() {
     };
 
     const handleDecode = async (file = selectedFile) => {
-        if (!file) {
-            setError('Please select an image file or use camera to decode.');
-            return;
-        }
+        if (!file) return;
         setError('');
         setDecodedMessage('');
         const formData = new FormData();
@@ -236,123 +234,150 @@ function App() {
     };
 
     const isUrl = (str) => {
-        if (!str) return false;
-        const pattern = /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/[^\s]*)?$/i;
-        return pattern.test(str.trim());
-    };
-
-    useEffect(() => {
-        if (decodedMessage && isUrl(decodedMessage.trim())) {
-            const target = decodedMessage.trim().startsWith('http') ? decodedMessage.trim() : `https://${decodedMessage.trim()}`;
-            window.open(target, '_blank');
+        try {
+            new URL(str);
+            return true;
+        } catch (_) {
+            return false;
         }
-    }, [decodedMessage]);
+    };
 
     const downloadEncodedImage = async () => {
         if (!encodedImageUrl) return;
         try {
             const response = await fetch(encodedImageUrl);
             const blob = await response.blob();
-            const url = URL.createObjectURL(blob);
+            const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
+            a.style.display = 'none';
             a.href = url;
-            a.download = 'picode.png';
+            a.download = `PiCode-${Date.now()}.png`;
             document.body.appendChild(a);
             a.click();
-            URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        } catch (err) {
-            console.error('Download failed', err);
-            setError('Failed to download image.');
+            window.URL.revokeObjectURL(url);
+            a.remove();
+        } catch (error) {
+            console.error('Error downloading the image:', error);
+            setError('Could not download the image.');
         }
     };
+    
+
+    const dimensionOptions = Object.keys(capacityMap).map(dim => (
+        <option key={dim} value={dim}>{dim}x{dim}</option>
+    ));
 
     return (
         <div className="App">
-            <h1>PIcode Demo</h1>
-            {error && <p className="error">{error}</p>}
-            
+            <header>
+                <h1>PiCode Generator</h1>
+                <p>Create beautiful, scannable QR codes with embedded images.</p>
+            </header>
+
             <div className="card">
-                <h2>Encode</h2>
+                <h2>Encoder</h2>
                 <div className="textarea-container">
-                <textarea 
-                    value={message} 
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Enter message to encode"
+                    <textarea
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        placeholder="Enter your message (e.g., a URL)"
                         maxLength={MAX_MESSAGE_LENGTH}
-                />
-                    <p className="char-counter">{message.length} / {MAX_MESSAGE_LENGTH}</p>
+                    />
+                    <span className="char-counter">{message.length} / {MAX_MESSAGE_LENGTH}</span>
                 </div>
+                
                 <div className="options">
                     <div>
-                        <label htmlFor="moduleSize">Image Size:</label>
-                        <select id="moduleSize" value={moduleSize} onChange={(e) => setModuleSize(e.target.value)}>
-                            <option value="4">Medium</option>
-                            <option value="5">Large</option>
-                            <option value="6">Extra Large</option>
-                            <option value="8">Super Large</option>
+                        <label htmlFor="logo-upload">Logo Image:</label>
+                        <input id="logo-upload" type="file" onChange={(e) => setLogoFile(e.target.files[0])} accept="image/*" />
+                    </div>
+                    <div>
+                        <label htmlFor="dimension-select">Dimensions:</label>
+                        <select id="dimension-select" value={dimension} onChange={(e) => setDimension(e.target.value)}>
+                            {dimensionOptions}
+                        </select>
+                    </div>
+                    <div>
+                        <label htmlFor="quality-slider">Quality (λ): {quality}</label>
+                        <input 
+                            id="quality-slider"
+                            type="range" 
+                            min="10" 
+                            max="40" 
+                            value={quality} 
+                            onChange={(e) => setQuality(e.target.value)}
+                            className="slider"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="module-size-select">Module Size:</label>
+                        <select id="module-size-select" value={moduleSize} onChange={(e) => setModuleSize(e.target.value)}>
+                            <option value="4">4x4 pixels</option>
+                            <option value="5">5x5 pixels</option>
+                            <option value="6">6x6 pixels</option>
+                            <option value="7">7x7 pixels</option>
+                            <option value="8">8x8 pixels</option>
                         </select>
                     </div>
                 </div>
-                <div>
-                    <label htmlFor="logo-upload">Upload Logo:</label>
-                    <input id="logo-upload" type="file" onChange={(e) => setLogoFile(e.target.files[0])} accept="image/png, image/jpeg" />
-                </div>
-                <button onClick={handleEncode} disabled={message.length === 0 || !logoFile}>Encode</button>
+
+                <button onClick={handleEncode} disabled={!message || !logoFile}>Generate PiCode</button>
+
                 {encodedImageUrl && (
                     <div className="result">
-                        <h3>Encoded PIcode:</h3>
-                        <img src={encodedImageUrl} alt="Encoded PIcode" />
-                        <button onClick={downloadEncodedImage} className="download-btn">Download</button>
+                        <h3>Your PiCode:</h3>
+                        <img src={encodedImageUrl} alt="Encoded PiCode" />
+                        <button className="download-btn" onClick={downloadEncodedImage}>Download Image</button>
                     </div>
                 )}
             </div>
 
             <div className="card">
-                <h2>Decode</h2>
+                <h2>Decoder</h2>
                 <div className="decode-options">
                     <div className="file-upload-section">
-                        <h3>Upload Image File</h3>
-                        <input type="file" onChange={(e) => setSelectedFile(e.target.files[0])} accept="image/*" />
-                        <button onClick={() => handleDecode()} disabled={!selectedFile}>Decode from File</button>
+                        <h3>Upload an Image</h3>
+                        <input type="file" onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                                setSelectedFile(file);
+                                handleDecode(file);
+                            }
+                        }} accept="image/*" />
                     </div>
-                    
                     <div className="camera-section">
-                        <h3>Scan with Camera</h3>
+                        <h3>Use Camera</h3>
                         {!showCamera ? (
-                            <button onClick={startCamera}>Start Camera</button>
+                            <button onClick={startCamera} className="primary-button">Start Camera</button>
                         ) : (
-                            <div className="camera-container">
-                                <div className="video-wrapper">
-                                    <video ref={videoRef} autoPlay playsInline muted className="camera-video" />
-                                    <div className="overlay-guide" />
-                                </div>
-                                <canvas ref={canvasRef} style={{ display: 'none' }} />
-                                
-                                <div className={`scanning-indicator ${isScanning ? 'scanning' : ''}`}>
-                                    <p>🔍 {isScanning ? 'Scanning for PIcode...' : 'Preparing camera...'}</p>
-                                </div>
-                                
-                                <div className="camera-controls">
-                                    <button onClick={stopCamera}>Close Camera</button>
-                                </div>
-                            </div>
+                            <button onClick={stopCamera} className="stop-button">Stop Camera</button>
                         )}
                     </div>
                 </div>
-                
+                {showCamera && (
+                    <div className="camera-container">
+                        <div className="video-wrapper">
+                            <video ref={videoRef} className="camera-video" playsInline />
+                            <div className="overlay-guide"></div>
+                        </div>
+                        <canvas ref={canvasRef} style={{ display: 'none' }} />
+                        <div className={`scanning-indicator ${isScanning ? 'scanning' : ''}`}>
+                            <p>{isScanning ? 'Scanning...' : 'Ready to scan'}</p>
+                        </div>
+                    </div>
+                )}
                 {decodedMessage && (
                     <div className="result">
                         <h3>Decoded Message:</h3>
-                        {isUrl(decodedMessage.trim()) ? (
-                            <a href={decodedMessage.trim().startsWith('http') ? decodedMessage.trim() : `https://${decodedMessage.trim()}`}
-                               target="_blank" rel="noopener noreferrer">{decodedMessage}</a>
+                        {isUrl(decodedMessage) ? (
+                            <a href={decodedMessage} target="_blank" rel="noopener noreferrer">{decodedMessage}</a>
                         ) : (
                             <p>{decodedMessage}</p>
                         )}
                     </div>
                 )}
             </div>
+             {error && <p className="error">{error}</p>}
         </div>
     );
 }

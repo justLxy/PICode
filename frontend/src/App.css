@@ -139,6 +139,10 @@ input[type="file"]::-webkit-file-upload-text {
     text-overflow: ellipsis;
 }
 
+.slider {
+    width: 100%;
+}
+
 button {
     background: var(--primary-color);
     color: white;
