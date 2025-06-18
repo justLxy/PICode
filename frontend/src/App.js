@@ -239,6 +239,25 @@ function App() {
         }
     }, [decodedMessage]);
 
+    const downloadEncodedImage = async () => {
+        if (!encodedImageUrl) return;
+        try {
+            const response = await fetch(encodedImageUrl);
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'picode.png';
+            document.body.appendChild(a);
+            a.click();
+            URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (err) {
+            console.error('Download failed', err);
+            setError('Failed to download image.');
+        }
+    };
+
     return (
         <div className="App">
             <h1>PIcode Demo</h1>
@@ -275,6 +294,7 @@ function App() {
                     <div className="result">
                         <h3>Encoded PIcode:</h3>
                         <img src={encodedImageUrl} alt="Encoded PIcode" />
+                        <button onClick={downloadEncodedImage} className="download-btn">Download</button>
                     </div>
                 )}
             </div>

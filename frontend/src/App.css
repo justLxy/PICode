@@ -166,6 +166,10 @@ button:disabled {
 }
 
 .result {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
     margin-top: 20px;
     padding: 15px;
     background: #e7f9ec;
@@ -174,6 +178,7 @@ button:disabled {
 }
 
 .result img {
+    margin-bottom: 16px;
     max-width: 100%;
     height: auto;
     border: 1px solid #ddd;
@@ -299,6 +304,26 @@ button:disabled {
 
 .stop-button:hover {
     background-color: #c82333 !important;
+}
+
+.download-btn {
+    display: inline-block;
+    margin-top: 12px;
+    text-decoration: none;
+    background: var(--primary-color);
+    color: #fff;
+    padding: 12px 28px;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    transition: background 0.25s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.download-btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
 }
 
 @media (max-width: 768px) {
