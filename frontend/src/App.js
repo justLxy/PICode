@@ -221,18 +221,18 @@ function App() {
 
     return (
         <div className="App">
-            <h1>PIcode Encoder/Decoder</h1>
+            <h1>PIcode Demo</h1>
             {error && <p className="error">{error}</p>}
             
             <div className="card">
                 <h2>Encode</h2>
                 <div className="textarea-container">
-                    <textarea 
-                        value={message} 
-                        onChange={(e) => setMessage(e.target.value)}
-                        placeholder="Enter message to encode"
+                <textarea 
+                    value={message} 
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Enter message to encode"
                         maxLength={MAX_MESSAGE_LENGTH}
-                    />
+                />
                     <p className="char-counter">{message.length} / {MAX_MESSAGE_LENGTH}</p>
                 </div>
                 <div className="options">
