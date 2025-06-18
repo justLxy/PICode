@@ -79,6 +79,10 @@ button:disabled {
 
 .result {
     margin-top: 20px;
+    padding: 15px;
+    background-color: #e8f5e8;
+    border-radius: 4px;
+    border-left: 4px solid #4CAF50;
 }
 
 .result img {
@@ -94,4 +98,113 @@ button:disabled {
     border: 1px solid #ebccd1;
     padding: 10px;
     border-radius: 4px;
+}
+
+.decode-options {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.file-upload-section,
+.camera-section {
+    flex: 1;
+    min-width: 300px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+.file-upload-section h3,
+.camera-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 1.1em;
+}
+
+.camera-container {
+    text-align: center;
+}
+
+.camera-video {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    border: 2px solid #007bff;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    background-color: #000;
+}
+
+.scanning-indicator {
+    background-color: #28a745;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    animation: pulse 1s infinite;
+    transition: background-color 0.3s ease;
+}
+
+.scanning-indicator:not(.scanning) {
+    background-color: #007bff;
+    animation: none;
+}
+
+.scanning-indicator p {
+    margin: 0;
+    font-weight: bold;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+.camera-controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.camera-controls button {
+    padding: 8px 16px;
+    font-size: 0.9em;
+}
+
+.primary-button {
+    background-color: #28a745 !important;
+}
+
+.primary-button:hover {
+    background-color: #218838 !important;
+}
+
+.stop-button {
+    background-color: #dc3545 !important;
+}
+
+.stop-button:hover {
+    background-color: #c82333 !important;
+}
+
+@media (max-width: 768px) {
+    .decode-options {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .file-upload-section,
+    .camera-section {
+        min-width: auto;
+    }
+    
+    .camera-video {
+        max-width: 100%;
+    }
 }

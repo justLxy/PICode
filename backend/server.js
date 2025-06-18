@@ -75,7 +75,7 @@ app.post('/api/encode', upload.single('logo'), (req, res) => {
                 if (errorOutput.includes('Message too long')) {
                     return res.status(400).json({ error: 'Message is too long. Please shorten your message and try again.' });
                 }
-                res.status(500).json({ error: 'Failed to encode message.', details: errorOutput.trim() });
+                 res.status(500).json({ error: 'Failed to encode message.', details: errorOutput.trim() });
             }
         }
     });

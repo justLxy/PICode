@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './App.css';
 
 function App() {
@@ -13,6 +13,21 @@ function App() {
 
     // Add state for encoder options
     const [moduleSize, setModuleSize] = useState('4');
+
+    // Camera related state
+    const [showCamera, setShowCamera] = useState(false);
+    const [stream, setStream] = useState(null);
+    const [isScanning, setIsScanning] = useState(false);
+    const videoRef = useRef(null);
+    const canvasRef = useRef(null);
+    const scanLoopId = useRef(null);
+    const isScanningRef = useRef(false);
+    const inflightRef = useRef(false); // prevent overlapping requests
+
+    // Sync isScanning state to a ref to get the latest value in the animation loop
+    useEffect(() => {
+        isScanningRef.current = isScanning;
+    }, [isScanning]);
 
     const handleEncode = async () => {
         setError('');
@@ -41,15 +56,149 @@ function App() {
         }
     };
 
-    const handleDecode = async () => {
-        if (!selectedFile) {
-            setError('Please select an image file to decode.');
+    const startCamera = async () => {
+        try {
+            const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    facingMode: 'environment',
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                }
+            });
+            setStream(mediaStream);
+            setShowCamera(true);
+            setError('');
+            
+            // Wait for video element to be ready
+            setTimeout(() => {
+                if (videoRef.current) {
+                    videoRef.current.srcObject = mediaStream;
+                    videoRef.current.onloadedmetadata = () => {
+                        videoRef.current.play();
+                        // Auto start scanning once camera is ready
+                        setTimeout(() => {
+                            startAutoScan();
+                        }, 200); // Reduced delay for faster start
+                    };
+                }
+            }, 100);
+        } catch (err) {
+            console.error('Camera error:', err);
+            setError('Unable to access camera. Please check permissions and try again.');
+        }
+    };
+
+    const stopCamera = () => {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            setStream(null);
+        }
+        stopAutoScan(); // Ensure scanning stops when camera closes
+        setShowCamera(false);
+    };
+
+    const startAutoScan = () => {
+        if (isScanningRef.current) return;
+        
+        setIsScanning(true);
+        setError('');
+        setDecodedMessage('');
+        
+        // Start the continuous scan loop
+        scanLoopId.current = requestAnimationFrame(scanLoop);
+    };
+
+    const stopAutoScan = () => {
+        setIsScanning(false); // This will stop the loop
+        if (scanLoopId.current) {
+            cancelAnimationFrame(scanLoopId.current);
+        }
+    };
+
+    const scanLoop = () => {
+        if (!isScanningRef.current) return;
+        if (!inflightRef.current) {
+            inflightRef.current = true;
+            captureAndDecode().finally(() => {
+                inflightRef.current = false;
+                // Request next frame after current decode completes
+                scanLoopId.current = requestAnimationFrame(scanLoop);
+            });
+        } else {
+            // Skip this frame, try again next frame
+            scanLoopId.current = requestAnimationFrame(scanLoop);
+        }
+    };
+    
+    const captureAndDecode = () => {
+        return new Promise(resolve => {
+            if (!videoRef.current || !canvasRef.current || videoRef.current.paused || videoRef.current.ended) {
+                return resolve();
+            }
+
+            const video = videoRef.current;
+            const canvas = canvasRef.current;
+            const context = canvas.getContext('2d');
+
+            // Crop the center square of the video and resize to 600x600
+            const side = Math.min(video.videoWidth, video.videoHeight);
+            const sx = (video.videoWidth - side) / 2;
+            const sy = (video.videoHeight - side) / 2;
+            const TARGET = 600;
+
+            canvas.width = TARGET;
+            canvas.height = TARGET;
+
+            if (TARGET === 0) return resolve();
+
+            context.drawImage(
+                video,
+                sx,
+                sy,
+                side,
+                side,
+                0,
+                0,
+                TARGET,
+                TARGET
+            );
+
+            canvas.toBlob(async (blob) => {
+                if (blob && isScanningRef.current) {
+                    const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
+                    const formData = new FormData();
+                    formData.append('image', file);
+
+                    try {
+                        const response = await fetch('http://localhost:3001/api/decode', {
+                            method: 'POST',
+                            body: formData,
+                        });
+                        const data = await response.json();
+
+                        if (isScanningRef.current && response.ok && data.decodedMessage && !data.decodedMessage.includes('Can not detect')) {
+                            setDecodedMessage(data.decodedMessage);
+                            stopCamera();
+                            setError('');
+                        }
+                    } catch (err) {
+                        /* network or decode error; continue scanning */
+                    }
+                }
+                resolve();
+            }, 'image/jpeg', 0.5); // smaller payload for faster upload
+        });
+    };
+
+    const handleDecode = async (file = selectedFile) => {
+        if (!file) {
+            setError('Please select an image file or use camera to decode.');
             return;
         }
         setError('');
         setDecodedMessage('');
         const formData = new FormData();
-        formData.append('image', selectedFile);
+        formData.append('image', file);
 
         try {
             const response = await fetch('http://localhost:3001/api/decode', {
@@ -109,8 +258,34 @@ function App() {
 
             <div className="card">
                 <h2>Decode</h2>
-                <input type="file" onChange={(e) => setSelectedFile(e.target.files[0])} />
-                <button onClick={handleDecode} disabled={!selectedFile}>Decode</button>
+                <div className="decode-options">
+                    <div className="file-upload-section">
+                        <h3>Upload Image File</h3>
+                        <input type="file" onChange={(e) => setSelectedFile(e.target.files[0])} accept="image/*" />
+                        <button onClick={() => handleDecode()} disabled={!selectedFile}>Decode from File</button>
+                    </div>
+                    
+                    <div className="camera-section">
+                        <h3>Scan with Camera</h3>
+                        {!showCamera ? (
+                            <button onClick={startCamera}>Start Camera</button>
+                        ) : (
+                            <div className="camera-container">
+                                <video ref={videoRef} autoPlay playsInline muted className="camera-video" />
+                                <canvas ref={canvasRef} style={{ display: 'none' }} />
+                                
+                                <div className={`scanning-indicator ${isScanning ? 'scanning' : ''}`}>
+                                    <p>🔍 {isScanning ? 'Scanning for PIcode...' : 'Preparing camera...'}</p>
+                                </div>
+                                
+                                <div className="camera-controls">
+                                    <button onClick={stopCamera}>Close Camera</button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+                
                 {decodedMessage && (
                     <div className="result">
                         <h3>Decoded Message:</h3>
