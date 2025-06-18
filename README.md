@@ -8,7 +8,23 @@
 -   **Package Manager**: npm
 
 ### Project Structure
-(Same as above)
+PICode/
+├── backend/
+│   ├── cpp_src/          # C++ Core Encoding/Decoding Source Code
+│   │   ├── Makefile      # C++ compilation scripts
+│   │   ├── encoder/      # Encoder source file
+│   │   └── decoder/      # Decoder source file
+│   ├── node_modules/
+│   ├── public/           # Storing the generated PIcode image
+│   ├── uploads/          # Stores temporary images uploaded during decoding
+│   ├── encoder           # (Compiled and Generated) Encoder Executables
+│   ├── decoder           # (Compiled and Generated) Decoder Executables
+│   ├── package.json
+│   └── server.js         # Express back-end services
+└── frontend/
+    ├── public/
+    ├── src/              # React Front End Source Code
+    └── package.json
 
 ### Prerequisites
 
