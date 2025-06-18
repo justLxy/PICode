@@ -24,11 +24,6 @@ function App() {
     const isScanningRef = useRef(false);
     const inflightRef = useRef(false); // prevent overlapping requests
 
-    // Sync isScanning state to a ref to get the latest value in the animation loop
-    useEffect(() => {
-        isScanningRef.current = isScanning;
-    }, [isScanning]);
-
     const handleEncode = async () => {
         setError('');
         setEncodedImageUrl('');
@@ -67,6 +62,7 @@ function App() {
         setDecodedMessage('');
         setError('');
         setIsScanning(false);
+        isScanningRef.current = false; // Sync ref manually
         inflightRef.current = false;
         // --- End Hard Reset ---
 
@@ -120,7 +116,7 @@ function App() {
     const startAutoScan = () => {
         // No need for "if (isScanningRef.current) return;" because startCamera now handles reset
         setIsScanning(true);
-        // setDecodedMessage(''); // Moved to startCamera
+        isScanningRef.current = true; // Sync ref manually
         // setError(''); // Moved to startCamera
         
         // Start the continuous scan loop
@@ -129,6 +125,7 @@ function App() {
 
     const stopAutoScan = () => {
         setIsScanning(false);
+        isScanningRef.current = false; // Sync ref manually
         if (scanLoopId.current) {
             cancelAnimationFrame(scanLoopId.current);
             scanLoopId.current = null; // Also clear the ref here
