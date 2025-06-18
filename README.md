@@ -10,20 +10,20 @@
 ### Project Structure
 PICode/
 ├── backend/
-│   ├── cpp_src/          # C++ Core Encoding/Decoding Source Code
-│   │   ├── Makefile      # C++ compilation scripts
-│   │   ├── encoder/      # Encoder source file
-│   │   └── decoder/      # Decoder source file
+│   ├── cpp_src/          # C++ core encoding/decoding source code
+│   │   ├── Makefile      # C++ build scripts
+│   │   ├── encoder/      # Encoder source files
+│   │   └── decoder/      # Decoder source files
 │   ├── node_modules/
-│   ├── public/           # Storing the generated PIcode image
-│   ├── uploads/          # Stores temporary images uploaded during decoding
-│   ├── encoder           # (Compiled and Generated) Encoder Executables
-│   ├── decoder           # (Compiled and Generated) Decoder Executables
+│   ├── public/           # Stores generated PIcode images
+│   ├── uploads/          # Temporary uploads during decoding
+│   ├── encoder           # Compiled encoder executables
+│   ├── decoder           # Compiled decoder executables
 │   ├── package.json
-│   └── server.js         # Express back-end services
+│   └── server.js         # Express back-end service
 └── frontend/
     ├── public/
-    ├── src/              # React Front End Source Code
+    ├── src/              # React front-end source code
     └── package.json
 
 ### Prerequisites
