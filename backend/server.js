@@ -91,6 +91,11 @@ app.post('/api/decode', upload.single('image'), (req, res) => {
 
     const process = spawn(decoderPath, [imagePath]);
 
+    // Kill process if it runs over 3 seconds
+    const killTimer = setTimeout(() => {
+        try { process.kill('SIGKILL'); } catch (e) {}
+    }, 3000);
+
     let output = '';
     let errorOutput = '';
     let isResponseSent = false;
@@ -104,6 +109,7 @@ app.post('/api/decode', upload.single('image'), (req, res) => {
     });
 
     process.on('close', (code) => {
+        clearTimeout(killTimer);
         if(isResponseSent) return;
         isResponseSent = true;
 

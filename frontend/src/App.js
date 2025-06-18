@@ -68,6 +68,7 @@ function App() {
             setStream(mediaStream);
             setShowCamera(true);
             setError('');
+            inflightRef.current = false;
             
             // Wait for video element to be ready
             setTimeout(() => {
@@ -113,6 +114,7 @@ function App() {
         if (scanLoopId.current) {
             cancelAnimationFrame(scanLoopId.current);
         }
+        inflightRef.current = false;
     };
 
     const scanLoop = () => {
@@ -140,8 +142,9 @@ function App() {
             const canvas = canvasRef.current;
             const context = canvas.getContext('2d');
 
-            // Crop the center square of the video and resize to 600x600
-            const side = Math.min(video.videoWidth, video.videoHeight);
+            // Crop the center 70% square of the shorter side and resize to 600x600
+            const minSide = Math.min(video.videoWidth, video.videoHeight);
+            const side = minSide * 0.7;
             const sx = (video.videoWidth - side) / 2;
             const sy = (video.videoHeight - side) / 2;
             const TARGET = 600;
@@ -165,7 +168,7 @@ function App() {
 
             canvas.toBlob(async (blob) => {
                 if (blob && isScanningRef.current) {
-                    const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
+                    const file = new File([blob], 'camera-capture.png', { type: 'image/png' });
                     const formData = new FormData();
                     formData.append('image', file);
 
@@ -186,7 +189,7 @@ function App() {
                     }
                 }
                 resolve();
-            }, 'image/jpeg', 0.5); // smaller payload for faster upload
+            }, 'image/png');
         });
     };
 
@@ -271,7 +274,10 @@ function App() {
                             <button onClick={startCamera}>Start Camera</button>
                         ) : (
                             <div className="camera-container">
-                                <video ref={videoRef} autoPlay playsInline muted className="camera-video" />
+                                <div className="video-wrapper">
+                                    <video ref={videoRef} autoPlay playsInline muted className="camera-video" />
+                                    <div className="overlay-guide" />
+                                </div>
                                 <canvas ref={canvasRef} style={{ display: 'none' }} />
                                 
                                 <div className={`scanning-indicator ${isScanning ? 'scanning' : ''}`}>
