@@ -8,6 +8,8 @@
 -   **Package Manager**: npm
 
 ### Project Structure
+
+```
 PICode/
 ├── backend/
 │   ├── cpp_src/          # C++ core encoding/decoding source code
@@ -25,6 +27,7 @@ PICode/
     ├── public/
     ├── src/              # React front-end source code
     └── package.json
+```
 
 ### Prerequisites
 
