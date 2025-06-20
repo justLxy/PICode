@@ -271,7 +271,6 @@ function App() {
         <div className="App">
             <header>
                 <h1>PiCode Generator</h1>
-                <p>Create beautiful, scannable QR codes with embedded images.</p>
             </header>
 
             <div className="card">
