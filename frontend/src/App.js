@@ -61,7 +61,7 @@ function App() {
         }
 
         try {
-            const response = await fetch('http://localhost:3001/api/encode', {
+            const response = await fetch('/api/encode', {
                 method: 'POST',
                 body: formData,
             });
@@ -190,7 +190,7 @@ function App() {
                     formData.append('image', file);
 
                     try {
-                        const response = await fetch('http://localhost:3001/api/decode', {
+                        const response = await fetch('/api/decode', {
                             method: 'POST',
                             body: formData,
                         });
@@ -218,7 +218,7 @@ function App() {
         formData.append('image', file);
 
         try {
-            const response = await fetch('http://localhost:3001/api/decode', {
+            const response = await fetch('/api/decode', {
                 method: 'POST',
                 body: formData,
             });

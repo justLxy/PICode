@@ -56,7 +56,7 @@ app.post('/api/encode', upload.single('logo'), (req, res) => {
     process.stdout.on('data', (data) => {
         if (isSent) return;
         isSent = true;
-        const imageUrl = `${req.protocol}://${req.get('host')}/public/${outputFileName}`;
+        const imageUrl = `/public/${outputFileName}`;
         res.json({ imageUrl });
     });
 
