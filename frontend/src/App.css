@@ -229,6 +229,8 @@ button:disabled {
 .video-wrapper {
     position: relative;
     display: inline-block;
+    width: 100%;
+    max-width: 100%;
 }
 
 .overlay-guide {
@@ -236,9 +238,10 @@ button:disabled {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    height: 70%;
-    width: auto;
+    width: 70%;
+    max-width: 70%;
     aspect-ratio: 1 / 1;
+    height: auto;
     max-height: 70%;
     border: 3px dashed rgba(255, 255, 255, 0.9);
     border-radius: 12px;
@@ -345,7 +348,18 @@ button:disabled {
         min-width: auto;
     }
     
+    .video-wrapper {
+        width: 100%;
+    }
+
     .camera-video {
+        width: 100%;
         max-width: 100%;
+    }
+
+    .overlay-guide {
+        width: 60%;
+        max-width: 60%;
+        max-height: 60%;
     }
 }
